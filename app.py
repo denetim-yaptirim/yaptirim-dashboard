@@ -1,61 +1,50 @@
-import streamlit as st
+import imaplib
+import email
+from email.header import decode_header
 import pandas as pd
-import re
 
-st.set_page_config(page_title="Yaptırım Haber Arşivi", layout="wide")
+# Giriş bilgileri
+username = "uluslararasiyaptirim@gmail.com"
+password = "Denetim12345"
 
-# CSV'den veri oku
-df = pd.read_csv("yaptirim_mailleri.csv")
+# Gmail'e bağlan
+imap = imaplib.IMAP4_SSL("imap.gmail.com")
+imap.login(username, password)
 
-# Tarih sütununu datetime'a çevir
-df['date'] = pd.to_datetime(df['date'], errors='coerce')
+# Gelen kutusunu seç
+imap.select("inbox")
 
-st.title("📑 Yaptırım Haber Arşivi")
+# Tüm mailleri al
+status, messages = imap.search(None, 'ALL')
+mail_ids = messages[0].split()
 
-# --- FİLTRELER ---
-st.sidebar.header("🔎 Filtreler")
+data = []
 
-keyword = st.sidebar.text_input("Anahtar kelime (body içinde):", "")
-subject_filter = st.sidebar.text_input("Konu (subject) içinde geçen:", "")
+# SON 10 MAIL
+for i in mail_ids[-10:]:
+    res, msg = imap.fetch(i, "(RFC822)")
+    for response in msg:
+        if isinstance(response, tuple):
+            msg = email.message_from_bytes(response[1])
+            subject, encoding = decode_header(msg["Subject"])[0]
+            if isinstance(subject, bytes):
+                subject = subject.decode(encoding if encoding else "utf-8", errors="ignore")
+            date = msg["Date"]
+            body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body = part.get_payload(decode=True).decode(errors='ignore')
+                        break
+            else:
+                body = msg.get_payload(decode=True).decode(errors='ignore')
+            data.append([date, subject, body])
 
-# Tarih girişleri
-start_date = st.sidebar.date_input("Başlangıç tarihi", df['date'].min().date())
-end_date = st.sidebar.date_input("Bitiş tarihi", df['date'].max().date())
+# CSV'ye kaydet
+df = pd.DataFrame(data, columns=["date", "subject", "body"])
+df.to_csv("yaptirim_mailleri.csv", index=False, encoding="utf-8")
 
-# 🔁 Tarihleri datetime formatına çevir
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
+# Oturumu kapat
+imap.logout()
 
-# --- VERİYİ FİLTRELE ---
-filtered_df = df[
-    (df['date'] >= start_date) &
-    (df['date'] <= end_date)
-]
-
-if subject_filter:
-    filtered_df = filtered_df[filtered_df['subject'].str.contains(subject_filter, case=False, na=False)]
-
-if keyword:
-    filtered_df = filtered_df[filtered_df['body'].str.contains(keyword, case=False, na=False)]
-
-# --- VURGULAMA FONKSİYONU ---
-def highlight_keyword(text, keyword):
-    if not keyword:
-        return text
-    highlighted = re.sub(
-        f"({re.escape(keyword)})",
-        r'<span style="background-color: yellow; font-weight: bold;">\1</span>',
-        text,
-        flags=re.IGNORECASE
-    )
-    return highlighted
-
-# --- SONUÇLARI GÖSTER ---
-st.write(f"🔍 Toplam {len(filtered_df)} sonuç bulundu.")
-
-for _, row in filtered_df.iterrows():
-    with st.expander(f"📅 {row['date'].date()} — ✉️ {row['subject']}"):
-        if keyword:
-            st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
-        else:
-            st.markdown(row['body'])
+print("✅ Mail verileri 'yaptirim_mailleri.csv' dosyasına kaydedildi.")
