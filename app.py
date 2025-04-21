@@ -2,17 +2,34 @@ import streamlit as st
 import pandas as pd
 import re
 
+# ✅ Sayfa ayarları — ilk satırda olmalı
 st.set_page_config(page_title="Yaptırım Haber Arşivi", layout="wide")
 
-# CSV'den veri oku
+# ✅ Sağdaki kutucuk: PythonAnywhere bağlantısı ve yenileme butonu
+with st.sidebar:
+    st.markdown("""
+    <div style="background-color: #f0f0f5; padding: 10px; border-radius: 10px; font-size: 14px;">
+    <b>🔁 Güncel Mail Verisini Getir</b><br><br>
+    1. <a href="https://www.pythonanywhere.com/user/Denetim/files/home/Denetim/yaptirim-dashboard/" target="_blank">PythonAnywhere'e Git</a><br>
+    2. <code>cek_yaptirim_mailleri.py</code> dosyasına tıkla<br>
+    3. Sağ üstten <b>▶ Run this file</b> butonuna bas<br>
+    4. Geri dön, aşağıdaki butona bas ⬇
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🔁 Verileri Yenile"):
+        st.rerun()
+
+# ✅ CSV'den veri oku
 df = pd.read_csv("yaptirim_mailleri.csv")
 
+# ✅ Sayfa başlığı
 st.title("📑 Yaptırım Haber Arşivi")
 
-# Anahtar kelime arama
+# ✅ Anahtar kelime arama
 keyword = st.text_input("🔍 Anahtar kelime ile ara (örnek: iran, rusya, petrol):")
 
-# Kelimeyi vurgulayan fonksiyon
+# ✅ Vurgulama fonksiyonu
 def highlight_keyword(text, keyword):
     if not keyword:
         return text
@@ -24,7 +41,7 @@ def highlight_keyword(text, keyword):
     )
     return highlighted
 
-# Arama varsa filtrele ve göster
+# ✅ Arama varsa filtreli göster
 if keyword:
     filtered_df = df[df['body'].str.contains(keyword, case=False, na=False)]
     st.write(f"🔎 {len(filtered_df)} sonuç bulundu.")
@@ -33,23 +50,7 @@ if keyword:
         with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
             st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
 
-# manuel yenileme butonu 
-st.markdown("""
-🛠️ **Güncel Mail Verisi Getirmek İçin Adımlar:**
-
-Eğer yeni mailler geldiğini biliyorsanız ve burada görünmüyorsa:
-
-1. [🔗 PythonAnywhere Güncelleme Paneline Git](https://www.pythonanywhere.com/user/Denetim/files/home/Denetim/yaptirim-dashboard/)
-2. Açılan sayfada `cek_yaptirim_mailleri.py` dosyasına tıklayın  
-3. Sağ üstteki `▶ Run this file` butonuna tıklayın  
-4. Sayfa “✅ Mail verileri 'yaptirim_mailleri.csv' dosyasına kaydedildi.” mesajı verirse işlem tamamdır  
-5. Bu sayfaya geri dönün ve aşağıdaki butona basarak en güncel verileri görüntüleyin:
-""")
-
-if st.button("🔁 Verileri Yenile"):
-    st.rerun()
-
-# Arama yoksa tüm mailleri sırala
+# ✅ Arama yoksa tüm mailleri sırala
 else:
     st.write(f"📋 Toplam {len(df)} mail gösteriliyor:")
     for _, row in df.iterrows():
