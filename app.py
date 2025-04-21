@@ -33,6 +33,22 @@ if keyword:
         with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
             st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
 
+# manuel yenileme butonu 
+st.markdown("""
+🛠️ **Güncel Mail Verisi Getirmek İçin Adımlar:**
+
+Eğer yeni mailler geldiğini biliyorsanız ve burada görünmüyorsa:
+
+1. [🔗 PythonAnywhere Güncelleme Paneline Git](https://www.pythonanywhere.com/user/Denetim/files/home/Denetim/yaptirim-dashboard/)
+2. Açılan sayfada `cek_yaptirim_mailleri.py` dosyasına tıklayın  
+3. Sağ üstteki `▶ Run this file` butonuna tıklayın  
+4. Sayfa “✅ Mail verileri 'yaptirim_mailleri.csv' dosyasına kaydedildi.” mesajı verirse işlem tamamdır  
+5. Bu sayfaya geri dönün ve aşağıdaki butona basarak en güncel verileri görüntüleyin:
+""")
+
+if st.button("🔁 Verileri Yenile"):
+    st.rerun()
+
 # Arama yoksa tüm mailleri sırala
 else:
     st.write(f"📋 Toplam {len(df)} mail gösteriliyor:")
