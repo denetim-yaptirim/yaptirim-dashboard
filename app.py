@@ -23,6 +23,31 @@ def highlight_keyword(text, keyword):
         flags=re.IGNORECASE
     )
     return highlighted
+import streamlit as st
+import pandas as pd
+import re
+
+st.set_page_config(page_title="Yaptırım Haber Arşivi", layout="wide")
+
+# ✅ YENİLEME BUTONU KUTUSU (SAĞDAKİ KÜÇÜK ALANDA)
+with st.sidebar:
+    st.markdown("""
+    <div style="background-color: #f0f0f5; padding: 10px; border-radius: 10px; font-size: 14px;">
+    <b>🔁 Güncel Mail Verisini Getir</b><br><br>
+    1. <a href="https://www.pythonanywhere.com/user/Denetim/files/home/Denetim/yaptirim-dashboard/" target="_blank">PythonAnywhere'e Git</a><br>
+    2. <code>cek_yaptirim_mailleri.py</code> dosyasına tıkla<br>
+    3. Sağ üstten <b>▶ Run this file</b> butonuna bas<br>
+    4. Geri dön, aşağıdaki butona bas ⬇
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🔁 Verileri Yenile"):
+        st.rerun()
+
+# 📄 CSV'den veri oku
+df = pd.read_csv("yaptirim_mailleri.csv")
+
+st.title("📑 Yaptırım Haber Arşivi")
 
 # Arama varsa filtrele ve göster
 if keyword:
