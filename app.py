@@ -11,9 +11,12 @@ with st.sidebar:
     <div style="background-color: #f0f0f5; padding: 10px; border-radius: 10px; font-size: 14px;">
     <b>🔁 Güncel Mail Verisini Getir</b><br><br>
     1. <a href="https://www.pythonanywhere.com/user/Denetim/files/home/Denetim/yaptirim-dashboard/" target="_blank">PythonAnywhere'e Git</a><br>
-    2. <code>cek_yaptirim_mailleri.py</code> dosyasına tıkla<br>
-    3. Sağ üstten <b>▶ Run this file</b> butonuna bas<br>
-    4. Geri dön, aşağıdaki butona bas ⬇
+    2. Giriş yapmanız istenirse aşağıdaki bilgileri kullanın:<br>
+    <code>Kullanıcı Adı:</code> <b>Denetim</b><br>
+    <code>Şifre:</code> <b>xQPE&6E@9-T*#?d</b><br><br>
+    3. <code>cek_yaptirim_mailleri.py</code> dosyasına tıklayın<br>
+    4. Sağ üstten <b>▶ Run this file</b> butonuna basın<br>
+    5. Geri dönüp aşağıdaki butona tıklayın ⬇
     </div>
     """, unsafe_allow_html=True)
 
