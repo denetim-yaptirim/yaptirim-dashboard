@@ -17,23 +17,24 @@ st.sidebar.header("🔎 Filtreler")
 
 keyword = st.sidebar.text_input("Anahtar kelime (body içinde):", "")
 subject_filter = st.sidebar.text_input("Konu (subject) içinde geçen:", "")
+
+# Tarih girişleri
 start_date = st.sidebar.date_input("Başlangıç tarihi", df['date'].min().date())
 end_date = st.sidebar.date_input("Bitiş tarihi", df['date'].max().date())
 
-# --- VERİYİ FİLTRELE ---
-filtered_df = df.copy()
+# 🔁 Tarihleri datetime formatına çevir
+start_date = pd.to_datetime(start_date)
+end_date = pd.to_datetime(end_date)
 
-# Tarih aralığı
-filtered_df = filtered_df[
-    (filtered_df['date'] >= pd.to_datetime(start_date)) &
-    (filtered_df['date'] <= pd.to_datetime(end_date))
+# --- VERİYİ FİLTRELE ---
+filtered_df = df[
+    (df['date'] >= start_date) &
+    (df['date'] <= end_date)
 ]
 
-# Konu filtresi
 if subject_filter:
     filtered_df = filtered_df[filtered_df['subject'].str.contains(subject_filter, case=False, na=False)]
 
-# Body anahtar kelime filtresi
 if keyword:
     filtered_df = filtered_df[filtered_df['body'].str.contains(keyword, case=False, na=False)]
 
