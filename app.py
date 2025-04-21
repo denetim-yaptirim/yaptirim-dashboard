@@ -7,37 +7,12 @@ st.set_page_config(page_title="Yaptırım Haber Arşivi", layout="wide")
 # CSV'den veri oku
 df = pd.read_csv("yaptirim_mailleri.csv")
 
-# Tarih sütununu datetime'a çevir
-df['date'] = pd.to_datetime(df['date'], errors='coerce')
-
 st.title("📑 Yaptırım Haber Arşivi")
 
-# --- FİLTRELER ---
-st.sidebar.header("🔎 Filtreler")
+# Anahtar kelime arama
+keyword = st.text_input("🔍 Anahtar kelime ile ara (örnek: iran, rusya, petrol):")
 
-keyword = st.sidebar.text_input("Anahtar kelime (body içinde):", "")
-subject_filter = st.sidebar.text_input("Konu (subject) içinde geçen:", "")
-start_date = st.sidebar.date_input("Başlangıç tarihi", df['date'].min().date())
-end_date = st.sidebar.date_input("Bitiş tarihi", df['date'].max().date())
-
-# --- VERİYİ FİLTRELE ---
-filtered_df = df.copy()
-
-# Tarih aralığı
-filtered_df = filtered_df[
-    (filtered_df['date'] >= pd.to_datetime(start_date)) &
-    (filtered_df['date'] <= pd.to_datetime(end_date))
-]
-
-# Konu filtresi
-if subject_filter:
-    filtered_df = filtered_df[filtered_df['subject'].str.contains(subject_filter, case=False, na=False)]
-
-# Body anahtar kelime filtresi
-if keyword:
-    filtered_df = filtered_df[filtered_df['body'].str.contains(keyword, case=False, na=False)]
-
-# --- VURGULAMA FONKSİYONU ---
+# Kelimeyi vurgulayan fonksiyon
 def highlight_keyword(text, keyword):
     if not keyword:
         return text
@@ -49,12 +24,18 @@ def highlight_keyword(text, keyword):
     )
     return highlighted
 
-# --- SONUÇLARI GÖSTER ---
-st.write(f"🔍 Toplam {len(filtered_df)} sonuç bulundu.")
+# Arama varsa filtrele ve göster
+if keyword:
+    filtered_df = df[df['body'].str.contains(keyword, case=False, na=False)]
+    st.write(f"🔎 {len(filtered_df)} sonuç bulundu.")
 
-for _, row in filtered_df.iterrows():
-    with st.expander(f"📅 {row['date'].date()} — ✉️ {row['subject']}"):
-        if keyword:
+    for _, row in filtered_df.iterrows():
+        with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
             st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
-        else:
+
+# Arama yoksa tüm mailleri sırala
+else:
+    st.write(f"📋 Toplam {len(df)} mail gösteriliyor:")
+    for _, row in df.iterrows():
+        with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
             st.markdown(row['body'])
