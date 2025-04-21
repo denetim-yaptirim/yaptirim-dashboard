@@ -1,50 +1,64 @@
-import imaplib
-import email
-from email.header import decode_header
+import streamlit as st
 import pandas as pd
+import re
+from datetime import datetime
 
-# Giriş bilgileri
-username = "uluslararasiyaptirim@gmail.com"
-password = "Denetim12345"
+st.set_page_config(page_title="Yaptırım Haber Arşivi", layout="wide")
 
-# Gmail'e bağlan
-imap = imaplib.IMAP4_SSL("imap.gmail.com")
-imap.login(username, password)
+# CSV'den veri oku
+df = pd.read_csv("yaptirim_mailleri.csv")
 
-# Gelen kutusunu seç
-imap.select("inbox")
+# 'date' sütununu datetime'a çevir ve sadece tarih olarak tut
+df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.date
 
-# Tüm mailleri al
-status, messages = imap.search(None, 'ALL')
-mail_ids = messages[0].split()
+st.title("📑 Yaptırım Haber Arşivi")
 
-data = []
+# --- FİLTRELER ---
+st.sidebar.header("🔎 Filtreler")
 
-# SON 10 MAIL
-for i in mail_ids[-10:]:
-    res, msg = imap.fetch(i, "(RFC822)")
-    for response in msg:
-        if isinstance(response, tuple):
-            msg = email.message_from_bytes(response[1])
-            subject, encoding = decode_header(msg["Subject"])[0]
-            if isinstance(subject, bytes):
-                subject = subject.decode(encoding if encoding else "utf-8", errors="ignore")
-            date = msg["Date"]
-            body = ""
-            if msg.is_multipart():
-                for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        body = part.get_payload(decode=True).decode(errors='ignore')
-                        break
-            else:
-                body = msg.get_payload(decode=True).decode(errors='ignore')
-            data.append([date, subject, body])
+keyword = st.sidebar.text_input("Body içinde ara:")
+subject_filter = st.sidebar.text_input("Subject içinde ara:")
 
-# CSV'ye kaydet
-df = pd.DataFrame(data, columns=["date", "subject", "body"])
-df.to_csv("yaptirim_mailleri.csv", index=False, encoding="utf-8")
+# Tarih aralığı filtresi
+min_date = df['date'].min()
+max_date = df['date'].max()
 
-# Oturumu kapat
-imap.logout()
+date_range = st.sidebar.date_input("Tarih aralığı", [min_date, max_date])
 
-print("✅ Mail verileri 'yaptirim_mailleri.csv' dosyasına kaydedildi.")
+# Başlangıç ve bitiş tarihini ayarla
+if isinstance(date_range, list) and len(date_range) == 2:
+    start_date, end_date = date_range
+else:
+    start_date, end_date = min_date, max_date
+
+# --- VERİYİ FİLTRELE ---
+filtered_df = df[
+    (df['date'] >= start_date) & (df['date'] <= end_date)
+]
+
+if subject_filter:
+    filtered_df = filtered_df[filtered_df['subject'].str.contains(subject_filter, case=False, na=False)]
+
+if keyword:
+    filtered_df = filtered_df[filtered_df['body'].str.contains(keyword, case=False, na=False)]
+
+# --- HIGHLIGHT FONKSİYONU ---
+def highlight_keyword(text, keyword):
+    if not keyword:
+        return text
+    return re.sub(
+        f"({re.escape(keyword)})",
+        r'<span style="background-color: yellow;"><b>\1</b></span>',
+        text,
+        flags=re.IGNORECASE
+    )
+
+# --- SONUÇLARI GÖSTER ---
+st.write(f"🔍 {len(filtered_df)} sonuç bulundu")
+
+for _, row in filtered_df.iterrows():
+    with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
+        if keyword:
+            st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
+        else:
+            st.markdown(row['body'])
