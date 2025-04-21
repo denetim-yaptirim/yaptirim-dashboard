@@ -31,9 +31,11 @@ if keyword:
 
     for _, row in filtered_df.iterrows():
         with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
-            st.code(highlight_keyword(row['body'], keyword), language="text")
+            st.markdown(highlight_keyword(row['body'], keyword), unsafe_allow_html=True)
+
+# Arama yoksa tüm mailleri sırala
 else:
     st.write(f"📋 Toplam {len(df)} mail gösteriliyor:")
     for _, row in df.iterrows():
         with st.expander(f"📅 {row['date']} — ✉️ {row['subject']}"):
-            st.code(row['body'], language="text")
+            st.markdown(row['body'])
